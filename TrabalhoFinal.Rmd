@@ -1,0 +1,273 @@
+---
+title: "TrabalhoFinal"
+author: "Marla"
+date: "28/06/2021"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#install.packages("tidyverse") 
+#install.packages("ggplot2") 
+#install.packages("GGally") 
+#install.packages("ggcorrplot")
+#install.packages("factoMineR")
+#install.packages("neuralnet")
+```
+
+``` {r include=TRUE} 
+library(tidyverse) 
+library(ggplot2) 
+library(GGally) 
+library(ggcorrplot)
+library(FactoMineR)
+library(factoextra)
+library(cluster)
+library(neuralnet)
+```
+
+```{r}
+personality <- read.csv("C:/Users/Marla/Google Drive (mrpmelo@inf.ufpel.edu.br)/Doutorado/PAMD-FURG/MyR/personalitydata.csv")
+```
+
+
+# Etapa 1 - Escolha da base de dados
+
+##### Um dos desafios para a realização do trabalho, foi referente à busca de um dataset que fosse relacionado com a minha pesquisa de doutorado que consiste em análise de sentimento, neurociência e transtorno do espectro do autismo.Os datasets encontrados não continham uma descrição dos atributos, o que causou o não entendimento do dataset, outro desafio refere-se ao processamento do computador com baixo desempenho e dataset grandes, com isso, vários datasets interessantes tiveram que ser desconsiderados. Assim,o dataset escolhido no repositório Kaggle refere-se ao conjunto de dados que está disponivel em: https://www.kaggle.com/arslanali4343/top-personality-dataset
+
+# Etapa 2 - Objeto de pesquisa
+
+##### Este problema tenta identificar se indivíduos são receptivos para a diversidade, dado os indicadores de personalidade que constam no dataset. No artigo de Nguyen, Tien T. et al., 2018, os dados análisados são utilizados no contexto de sistemas de recomendação. 
+
+##### A base de dados refere-se a pontuações de avaliação de estudantes universitários, tais como: tendência do usuário em preferir novas experiências; tendência do usuário de ser compassivo e cooperativo ao invés de desconfiado e antagônico em relação aos outros; tendência do usuário a ter estresse psicológico; tendência do usuário de ser organizado e confiável e de mostrar autodisciplina; tendência do usuário de ser extrovertido; preferências por uma lista de 12 filmes manipulados com acaso; lista de filmes gerada para os usuários com base na preferência. Por exemplo: se a métrica atribuída for acidental e a condição atribuída for alta, os filmes; 12 filmes; opinião sobre a lista personalizada; opinião sobre o filme.
+
+# Etapa 3 - Pré-processamento
+
+
+```{r}
+summary(personality)
+```
+
+### 3.1 Tratamento de outliers
+
+##### Foram encontrados vários outliers no conjunto de dados, dessa forma, aplicou-se a exclusão dos atributos predicted_rating_x que referem a avaliação prevista do filme_x, e a exclusão dos outliers dos atibutos openness, agreeableness, conscientiousness e enjoy_watching.
+
+
+```{r}
+boxplot(personality$openness)
+boxplot(personality$agreeableness)
+boxplot(personality$conscientiousness)
+boxplot(personality$predicted_rating_1)
+boxplot(personality$predicted_rating_2)
+boxplot(personality$predicted_rating_3)
+boxplot(personality$predicted_rating_4)
+boxplot(personality$predicted_rating_5)
+boxplot(personality$predicted_rating_6)
+boxplot(personality$predicted_rating_7)
+boxplot(personality$predicted_rating_8)
+boxplot(personality$predicted_rating_9)
+boxplot(personality$predicted_rating_10)
+boxplot(personality$predicted_rating_11)
+boxplot(personality$predicted_rating_12)
+boxplot(personality$enjoy_watching)
+```
+
+#### 3.2 Exclusão de atributos
+
+
+```{r}
+personality1 <- subset(personality, select = -c(userid, predicted_rating_1, predicted_rating_2, predicted_rating_3, predicted_rating_4, predicted_rating_5, predicted_rating_6, predicted_rating_7, predicted_rating_8, predicted_rating_9, predicted_rating_10, predicted_rating_11, predicted_rating_12))
+summary(personality1)
+```
+#### 3.3.1 Exclusão de outliers do atributo openness
+
+```{r}
+q1 <- quantile(personality1$openness, 0.25)
+q3 <- quantile(personality1$openness, 0.75)
+iqr <- IQR(personality1$openness)
+limite_inferior1 <- q1 - (1.5*iqr)
+limite_superior1 <- q3 + (1.5*iqr)
+
+limite_inferior1
+limite_superior1
+
+personality2 <- subset(personality1, openness > limite_inferior1 & openness < limite_superior1)
+summary(personality2$openness)
+```
+
+#### 3.3.2 Exclusão de outliers do atributo agreeableness
+
+```{r}
+q1 <- quantile(personality2$agreeableness, 0.25)
+q3 <- quantile(personality2$agreeableness, 0.75)
+iqr <- IQR(personality2$agreeableness)
+limite_inferior2 <- q1 - (1.5*iqr)
+limite_superior2 <- q3 + (1.5*iqr)
+
+limite_inferior2
+limite_superior2
+
+personality3 <- subset(personality2, agreeableness > limite_inferior2 & agreeableness < limite_superior2)
+summary(personality3$agreeableness)
+```
+
+#### 3.3.3 Exclusão de outliers do atributo conscientiousness
+```{r}
+q1 <- quantile(personality3$conscientiousness, 0.25)
+q3 <- quantile(personality3$conscientiousness, 0.75)
+iqr <- IQR(personality3$conscientiousness)
+limite_inferior3 <- q1 - (1.5*iqr)
+limite_superior3 <- q3 + (1.5*iqr)
+
+limite_inferior3
+limite_superior3
+
+personality4 <- subset(personality3, conscientiousness > limite_inferior3 & conscientiousness < limite_superior3)
+summary(personality4$conscientiousness)
+```
+
+#### 3.3.4 Exclusão de outliers do atributo enjoy_watching
+```{r}
+q1 <- quantile(personality4$enjoy_watching, 0.25)
+q3 <- quantile(personality4$enjoy_watching, 0.75)
+iqr <- IQR(personality4$enjoy_watching)
+limite_inferior4 <- q1 - (1.5*iqr)
+limite_superior4 <- q3 + (1.5*iqr)
+
+limite_inferior4
+limite_superior4
+
+personality5 <- subset(personality4, openness > limite_inferior4 & enjoy_watching < limite_superior4)
+summary(personality5$enjoy_watching)
+```
+##### 3.3.5 Sem outliers
+```{r}
+boxplot(personality5$openness)
+boxplot(personality5$agreeableness)
+boxplot(personality5$conscientiousness)
+boxplot(personality5$enjoy_watching)
+```
+
+
+
+# Etapa 4 - Mineração de dados
+
+#####  Optou-se por utilizar 2 técnicas diferentes, usando um algoritmo em cada. Dentre as técnicas vistas em aula, as escolhidas, devido aos dados do dataset, foram a agrupamento, utilizando o algoritmo kmeans e regressão, utilizando redes neurais.
+
+
+
+## 4.1 Agrupamento -  k-means 
+
+##### 4.1.2 Exclusão dos atributos categoricos.
+
+```{r}
+p <- subset(personality5, select = -c(assigned.metric, assigned.condition))
+```
+
+##### 4.1.3 Transformar em scala
+
+```{r}
+p <- scale(p)
+```
+
+##### 4.1.4 Função para encontrar a quantidade ótima de clusters
+
+```{r}
+fviz_nbclust(p, kmeans, method = "gap_stat")
+```
+##### 4.1.5 Aplicação do algoritmo kmeans com 5 clusters
+```{r}
+p_kmeans <- kmeans(p, 5)
+```
+
+##### 4.1.6 Visualização dos agrupamentos
+```{r}
+fviz_cluster(p_kmeans, data = p)
+```
+
+## 4.2 Classificação -  Neuralnet
+
+
+```{r}
+summary(personality5)
+```
+
+##### 4.2.1 Transformação as classes serendipity, popularity, diversity, all para binário
+
+##### 4.2.1.1 criação das colunas
+```{r}
+prede <- personality5
+prede <- cbind(prede,prede$assigned.metric=='serendipity')
+prede <- cbind(prede,prede$assigned.metric=='popularity')
+prede <- cbind(prede,prede$assigned.metric=='diversity')
+prede <- cbind(prede,prede$assigned.metric=='all')
+```
+
+```{r}
+names(prede)[22] <- 'serendipity'
+names(prede)[23] <- 'popularity'
+names(prede)[24] <- 'diversity'
+names(prede)[25] <- 'all'
+```
+
+
+##### 4.2.1.2 Divisão o dataset 70% treino e 30% teste
+
+```{r}
+amostra  <- sample(2,150,replace=T,prob=c(.7,.3))
+treino <- prede[amostra==1,]
+teste <- prede[amostra==2,]
+```
+
+##### 4.2.2 Criação do modelo
+
+```{r}
+modelo <- neuralnet(serendipity + popularity + diversity + all ~
+                      openness + agreeableness + emotional_stability + conscientiousness + extraversion + movie_1 + movie_2 + movie_3 + movie_4 + movie_5 + movie_6 + movie_7 + movie_8 + movie_9 + movie_10 + movie_11 + movie_12 + is_personalized + enjoy_watching, treino,hidden=c(5,4))
+```
+
+```{r}
+plot(modelo)
+```
+##### 4.2.2.1 Teste do modelo
+
+```{r}
+result.test <- compute(modelo,teste[,1:21])
+resultado <- as.data.frame(result.test$net.result)
+names(resultado)[1] <- 'serendipity' 
+names(resultado)[2] <- 'popularity'
+names(resultado)[3] <- 'diversity'
+names(resultado)[4] <- 'all'
+```
+
+##### 4.2.2.2 Matriz de confusão para melhorar entendimento dos resultados
+
+```{r}
+resultado$class <- colnames(resultado[,1:4])[max.col(resultado[,1:4],ties.method = 'first')]
+mc <- table(resultado$class, teste$assigned.metric)
+acerto <- (sum(diag(mc))*100)
+mc
+```
+
+##### 4.2.2.3 Grau de acerto da Rede Neural
+
+```{r}
+acerto
+```
+# Etapa 5 - Análise dos resultados
+
+##### É possível perceber a definição dos grupos no agrupamento, embora alguns pontos estejam distantes de seu cluster, como pode-se observar os pontos azuis e vermelhos, ainda, a maior parte deles estão próximos uns dos outros, dessa forma possuem caracteristicas parecidas, assim como os grupos verde e marrom  que são os que mais apresentam proximidade. Os grupos indicados nas cores azul, vermelho, lilás e marrom são semelhantes entre si. é notável a distância do grupo verde para o vermelho e lilás, indicando que eles são diferentes entre si. Isso identifica os indivíduos com características semelhantes.
+
+
+##### Pode-se observar na matriz de confusão, que o modelo de rede neural, errou em bastante instância, talvez outra configuração de rede conseguiria obter resultados melhores.
+
+##### Dessa forma, nesse trabalho, não foi possível identificar se indivíduos são receptivos para a diversidade, baseado em dados de questionário e filmes.
+
+# Referências
+
+##### [1] NGUYEN, Tien T. et al. User personality and user satisfaction with recommender systems. Information Systems Frontiers, v. 20, n. 6, p. 1173-1189, 2018.
