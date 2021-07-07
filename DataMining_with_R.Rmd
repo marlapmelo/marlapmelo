@@ -32,7 +32,7 @@ library(neuralnet)
 ```
 
 ```{r}
-personality <- read.csv("C:/Users/Marla/Google Drive (mrpmelo@inf.ufpel.edu.br)/Doutorado/PAMD-FURG/MyR/personalitydata.csv")
+personality <- read.csv("personalitydata.csv")
 ```
 
 
